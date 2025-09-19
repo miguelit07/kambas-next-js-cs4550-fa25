@@ -4,11 +4,10 @@ import CourseNavigation from "./Navigation";
 export default function CoursesLayout(
   { children, params }: Readonly<{ children: ReactNode; params: { cid: string } }>
 ) {
-  const { cid } = params;
 
   return (
     <div id="wd-courses">
-      <h2>Courses {cid}</h2>
+      <h2>Courses {params.cid}</h2>
       <hr />
       <table>
         <tbody>
