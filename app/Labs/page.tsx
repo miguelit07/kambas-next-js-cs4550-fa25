@@ -4,6 +4,7 @@ export default function Labs() {
     <html>
       <body>
         <div id="wd-labs">
+          <h1>Miguel Bonela Oliveira</h1>
           <h1>Labs</h1>
           <ul>
             <li>

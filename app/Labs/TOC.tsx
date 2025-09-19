@@ -27,6 +27,11 @@ export default function TOC() {
           Kambaz
         </Link>
       </li>
+      <li>
+        <Link href="https://github.com/miguelit07/kambas-next-js-cs4550-fa25" id="wd-github">
+          Github{" "}
+        </Link>
+      </li>
     </ul>
   );
 }
