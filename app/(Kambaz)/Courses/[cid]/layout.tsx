@@ -1,26 +1,15 @@
 import { ReactNode } from "react";
-import CourseNavigation from "./Navigation";
 
-export default function CoursesLayout(
-  { children, params }: Readonly<{ children: ReactNode; params: { cid: string } }>
-) {
+interface CourseLayoutProps {
+  children: ReactNode;
+  params: { cid: string };
+}
 
+export default function CourseLayout({ children, params }: CourseLayoutProps) {
   return (
-    <div id="wd-courses">
-      <h2>Courses {params.cid}</h2>
-      <hr />
-      <table>
-        <tbody>
-          <tr>
-            <td valign="top" width="200">
-              <CourseNavigation />
-            </td>
-            <td valign="top" width="100%">
-              {children}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div>
+      <h1>Course: {params.cid}</h1>
+      {children}
     </div>
   );
 }
