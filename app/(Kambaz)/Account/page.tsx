@@ -1,7 +1,5 @@
-interface CoursePageProps {
-  params: { cid: string };
-}
+import { redirect } from "next/dist/client/components/navigation";
 
-export default function CoursePage({ params }: CoursePageProps) {
-  return <div>Welcome to course {params.cid}</div>;
+export default function AccountPage() {
+  redirect("/Account/Signin");
 }
