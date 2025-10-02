@@ -1,0 +1,41 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body * {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.sidebar-item {
+  width: 110px;
+  background-color: black;
+  color: white;
+  text-align: center;
+}
+
+
+.sidebar-item:active {
+  background-color: white;
+  color: red;
+}
+
+#wd-kambaz-navigation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 110px;
+  height: 100vh;
+  background-color: black;
+}
+
+.wd-main-content-offset {
+  padding-left: 110px; 
+  padding-top: 20px;
+}
+
+@media (min-width: 768px) {
+  .wd-main-content-offset {
+    padding-left: 140px;
+  }
+}

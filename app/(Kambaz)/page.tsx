@@ -1,11 +1,6 @@
+import { redirect } from "next/dist/client/components/navigation";
+
 export default function Kambaz() {
-  return (
-    <html>
-      <body>
-        <div id="wd-kambaz">
-          <h1>Kambaz</h1>
-        </div>
-      </body>
-    </html>
-  );
+  redirect("/Account/Signin");
 }
+
