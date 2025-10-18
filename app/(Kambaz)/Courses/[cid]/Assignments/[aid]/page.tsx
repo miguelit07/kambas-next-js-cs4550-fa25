@@ -1,4 +1,36 @@
+"use client";
+import { useParams, useRouter } from "next/navigation";
+import { assignments } from "../../../../Database";
+
+interface Assignment {
+  _id: string;
+  title: string;
+  course: string;
+}
+
 export default function AssignmentEditor() {
+  const params = useParams();
+  const router = useRouter();
+  const cid = params.cid as string;
+  const aid = params.aid as string;
+  
+  // Find the specific assignment
+  const assignment = (assignments as Assignment[]).find((a) => a._id === aid && a.course === cid);
+  
+  // Navigation function to go back to assignments
+  const navigateToAssignments = () => {
+    router.push(`/Courses/${cid}/Assignments`);
+  };
+  
+  if (!assignment) {
+    return (
+      <div className="p-4">
+        <h3>Assignment Not Found</h3>
+        <p>The assignment with ID &quot;{aid}&quot; was not found in course &quot;{cid}&quot;.</p>
+      </div>
+    );
+  }
+
   return (
     <div
       id="wd-assignments-editor"
@@ -10,7 +42,7 @@ export default function AssignmentEditor() {
         <label htmlFor="wd-name" className="form-label">
           Assignment Name
         </label>
-        <input id="wd-name" defaultValue="A1" className="form-control" />
+        <input id="wd-name" defaultValue={assignment.title} className="form-control" />
       </div>
 
       {/* Description */}
@@ -20,7 +52,7 @@ export default function AssignmentEditor() {
         </label>
         <textarea
           id="wd-description"
-          defaultValue="The assignment is available online. Submit a link to the landing page..."
+          defaultValue={`${assignment.title} - This assignment is available online. Submit a link to the landing page...`}
           className="form-control"
           rows={5}
         />
@@ -75,16 +107,6 @@ export default function AssignmentEditor() {
             <input
               className="form-check-input"
               type="checkbox"
-              id="wd-text-entry"
-            />
-            <label className="form-check-label" htmlFor="wd-text-entry">
-              Text Entry
-            </label>
-          </div>
-          <div className="form-check">
-            <input
-              className="form-check-input"
-              type="checkbox"
               id="wd-website-url"
               defaultChecked
             />
@@ -125,56 +147,70 @@ export default function AssignmentEditor() {
         </div>
       </div>
 
-      {/* Assign to */}
-      <div className="card p-3 mb-3">
-        <div className="mb-3">
-          <label htmlFor="wd-assign-to" className="form-label">
-            Assign to
-          </label>
-          <input
-            id="wd-assign-to"
-            defaultValue="Everyone"
-            className="form-control"
-          />
+      {/* Assign To */}
+      <div className="mb-3">
+        <label htmlFor="wd-assign-to" className="form-label">
+          Assign to
+        </label>
+        <input id="wd-assign-to" defaultValue="Everyone" className="form-control" />
+      </div>
+
+      {/* Dates */}
+      <div className="row">
+        <div className="col-md-4">
+          <div className="mb-3">
+            <label htmlFor="wd-due-date" className="form-label">
+              Due
+            </label>
+            <input
+              type="datetime-local"
+              id="wd-due-date"
+              className="form-control"
+            />
+          </div>
         </div>
-        <div className="mb-3">
-          <label htmlFor="wd-due-date" className="form-label">
-            Due
-          </label>
-          <input
-            type="datetime-local"
-            id="wd-due-date"
-            className="form-control"
-          />
+        <div className="col-md-4">
+          <div className="mb-3">
+            <label htmlFor="wd-available-from" className="form-label">
+              Available From
+            </label>
+            <input
+              type="datetime-local"
+              id="wd-available-from"
+              className="form-control"
+            />
+          </div>
         </div>
-        <div className="mb-3">
-          <label htmlFor="wd-available-from" className="form-label">
-            Available From
-          </label>
-          <input
-            type="datetime-local"
-            id="wd-available-from"
-            className="form-control"
-          />
-        </div>
-        <div className="mb-3">
-          <label htmlFor="wd-available-until" className="form-label">
-            Until
-          </label>
-          <input
-            type="datetime-local"
-            id="wd-available-until"
-            className="form-control"
-          />
+        <div className="col-md-4">
+          <div className="mb-3">
+            <label htmlFor="wd-available-until" className="form-label">
+              Until
+            </label>
+            <input
+              type="datetime-local"
+              id="wd-available-until"
+              className="form-control"
+            />
+          </div>
         </div>
       </div>
 
       {/* Buttons */}
       <div className="d-flex justify-content-end gap-2">
-        <button id="cancel-btn" type="button" className="btn btn-light">
+        <button 
+          id="cancel-btn" 
+          type="button" 
+          className="btn btn-light"
+          onClick={navigateToAssignments}
+        >
           Cancel
         </button>
-        <button id="submit-btn" type="button" className="btn btn-danger">
+        <button 
+          id="submit-btn" 
+          type="button" 
+          className="btn btn-danger"
+          onClick={navigateToAssignments}
+        >
           Save
         </button>
       </div>

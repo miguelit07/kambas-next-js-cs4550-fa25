@@ -1,19 +1,24 @@
+"use client";
 import { ReactNode } from "react";
 import CourseNavigation from "./Navigation";
 import { FaAlignJustify } from "react-icons/fa";
+import { courses } from "../../Database";
+import { usePathname, useParams } from "next/navigation";
 
-export default async function CoursesLayout({
+export default function CoursesLayout({
   children,
-  params,
-}: Readonly<{ children: ReactNode; params: Promise<{ cid: string }> }>) {
-  const { cid } = await params; // Await the params
-
+}: Readonly<{ children: ReactNode }>) {
+  const params = useParams();
+  const cid = params.cid as string;
+  const course = courses.find((course) => course._id === cid);
+  const pathname = usePathname();
+  
   return (
     <div id="wd-courses">
       <h2 className="text-danger">
         <FaAlignJustify className="me-4 fs-4 mb-1" />
-        Course {cid}{" "}
-      </h2>{" "}
+          {course?.number} &gt; {pathname.split("/").pop()} 
+      </h2>
       <hr />
       <div className="d-flex">
         <div className="d-none d-md-block">
