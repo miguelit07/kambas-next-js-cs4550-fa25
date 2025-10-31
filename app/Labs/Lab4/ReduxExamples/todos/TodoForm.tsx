@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button, FormControl, ListGroupItem } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { addTodo, setTodo, updateTodo } from "./TodoReducer";

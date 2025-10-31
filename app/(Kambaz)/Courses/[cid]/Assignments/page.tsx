@@ -19,6 +19,7 @@ export default function Assignments() {
   const cid = params.cid as string;
   const dispatch = useDispatch();
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { assignments } = useSelector((state: any) => state.assignmentsReducer);
   
   // Filter assignments for the current course
