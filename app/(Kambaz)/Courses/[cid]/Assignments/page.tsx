@@ -3,9 +3,10 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ListGroup, ListGroupItem } from "react-bootstrap";
 import { BsBook, BsGripVertical } from "react-icons/bs";
-import ModulesControlsButton from "../Modules/ModulesControlsButton";
-import LessonControlButtons from "../Modules/LessonControlButtons";
-import { assignments } from "../../../Database";
+import { FaPlus } from "react-icons/fa";
+import AssignmentControlButtons from "./AssignmentControlButtons";
+import { useSelector, useDispatch } from "react-redux";
+import { deleteAssignment } from "./reducer";
 
 interface Assignment {
   _id: string;
@@ -16,25 +17,33 @@ interface Assignment {
 export default function Assignments() {
   const params = useParams();
   const cid = params.cid as string;
+  const dispatch = useDispatch();
+  
+  const { assignments } = useSelector((state: any) => state.assignmentsReducer);
   
   // Filter assignments for the current course
-  const courseAssignments = (assignments as Assignment[]).filter((assignment) => assignment.course === cid);
+  const courseAssignments = assignments.filter((assignment: Assignment) => assignment.course === cid);
 
   return (
     <div>
-      {/* <AssignmentsButtonControls /> */}
-      <br />
-      <br />
-      <br />
-      <br />
+      {/* Assignment Controls */}
+      <div className="d-flex justify-content-end mb-3">
+        <Link
+          href={`/Courses/${cid}/Assignments/new`}
+          className="btn btn-danger me-2"
+        >
+          <FaPlus className="me-1" />
+          Assignment
+        </Link>
+      </div>
+      
       <ListGroup className="rounded-0" id="wd-modules">
         <ListGroupItem className="wd-module p-0 mb-5 fs-5 border-gray">
           <div className="wd-title p-3 ps-2 bg-secondary">
             <BsGripVertical className="me-2 fs-3" /> ASSIGNMENTS{" "}
-            <ModulesControlsButton />
           </div>
           <ListGroup className="wd-lessons rounded-0">
-            {courseAssignments.map((assignment, index) => (
+            {courseAssignments.map((assignment: Assignment, index: number) => (
               <ListGroupItem key={assignment._id} className="wd-lesson p-3 ps-1">
                 <div>
                   <BsGripVertical className="me-2 fs-3" />{" "}
@@ -45,7 +54,12 @@ export default function Assignments() {
                   >
                     {assignment.title}
                   </Link>{" "}
-                  <LessonControlButtons />
+                  <AssignmentControlButtons 
+                    assignmentId={assignment._id}
+                    deleteAssignment={(assignmentId) => {
+                      dispatch(deleteAssignment(assignmentId));
+                    }}
+                  />
                   <div className="small text-muted mt-1 ps-5">
                     <span className="text-danger">Multiple Modules</span> |{" "}
                     <b>Not available until </b>May {6 + index * 7} at 12:00am | Due May {13 + index * 7} at

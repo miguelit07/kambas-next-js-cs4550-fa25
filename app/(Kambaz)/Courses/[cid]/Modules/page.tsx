@@ -1,11 +1,14 @@
-"use client"
-import { ListGroup, ListGroupItem } from "react-bootstrap";
+"use client";
+import { FormControl, ListGroup, ListGroupItem } from "react-bootstrap";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import ModulesControls from "./ModulesControls";
 import { BsGripVertical } from "react-icons/bs";
 import ModulesControlsButton from "./ModulesControlsButton";
 import LessonControlButtons from "./LessonControlButtons";
-import { modules } from "../../../Database";
+import { addModule, editModule, updateModule, deleteModule }
+  from "./reducer";
+import { useSelector, useDispatch } from "react-redux";
 
 interface Lesson {
   _id: string;
@@ -23,32 +26,68 @@ interface Module {
 }
 
 export default function Modules() {
-  const params = useParams();
-  const cid = params.cid as string;
-  
-  // Filter modules for the current course
-  const courseModules = (modules as Module[]).filter((module) => module.course === cid);
+  const { cid } = useParams();
+  const [moduleName, setModuleName] = useState("");
+  const { modules } = useSelector((state: any) => state.modulesReducer);
+  const dispatch = useDispatch();
 
   return (
     <div>
-      <ModulesControls />
+      <ModulesControls 
+        moduleName={moduleName} 
+        setModuleName={setModuleName}
+        addModule={() => {
+          dispatch(addModule({ name: moduleName, course: cid }));
+          setModuleName("");
+        }} 
+      />
       <br />
       <br />
       <br />
       <br />
       <ListGroup className="rounded-0" id="wd-modules">
-        {courseModules.map((module) => (
-          <ListGroupItem key={module._id} className="wd-module p-0 mb-5 fs-5 border-gray">
-            <div className="wd-title p-3 ps-2 bg-secondary"> 
-              <BsGripVertical className="me-2 fs-3" /> 
-              {module.name} 
-              <ModulesControlsButton />
+        {modules
+          .filter((module: any) => module.course === cid)
+          .map((module: any) => (
+          <ListGroupItem
+            key={module._id}
+            className="wd-module p-0 mb-5 fs-5 border-gray"
+          >
+            <div className="wd-title p-3 ps-2 bg-secondary">
+              <BsGripVertical className="me-2 fs-3" />
+              {!module.editing && module.name}
+              {module.editing && (
+                <FormControl
+                  className="w-50 d-inline-block"
+                  onChange={(e) =>
+                    dispatch(
+                      updateModule({ ...module, name: e.target.value })
+                    )
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      dispatch(updateModule({ ...module, editing: false }));
+                    }
+                  }}
+                  defaultValue={module.name}
+                />
+              )}
+              <ModulesControlsButton 
+                moduleId={module._id}
+                deleteModule={(moduleId) => {
+                  dispatch(deleteModule(moduleId));
+                }}
+                editModule={(moduleId) => dispatch(editModule(moduleId))} 
+              />
             </div>
             {module.lessons && module.lessons.length > 0 && (
               <ListGroup className="wd-lessons rounded-0">
                 {module.lessons.map((lesson) => (
-                  <ListGroupItem key={lesson._id} className="wd-lesson p-3 ps-1">
-                    <BsGripVertical className="me-2 fs-3" /> 
+                  <ListGroupItem
+                    key={lesson._id}
+                    className="wd-lesson p-3 ps-1"
+                  >
+                    <BsGripVertical className="me-2 fs-3" />
                     {lesson.name}
                     <LessonControlButtons />
                   </ListGroupItem>
@@ -57,9 +96,9 @@ export default function Modules() {
             )}
           </ListGroupItem>
         ))}
-        
+
         {/* Show a message if no modules found for this course */}
-        {courseModules.length === 0 && (
+        {modules.filter((module: any) => module.course === cid).length === 0 && (
           <ListGroupItem className="wd-module p-3 text-center text-muted">
             No modules found for this course.
           </ListGroupItem>

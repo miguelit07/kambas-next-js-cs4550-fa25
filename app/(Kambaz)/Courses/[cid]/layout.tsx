@@ -1,5 +1,7 @@
 "use client";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
 import CourseNavigation from "./Navigation";
 import { FaAlignJustify } from "react-icons/fa";
 import { courses } from "../../Database";
@@ -9,15 +11,42 @@ export default function CoursesLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   const params = useParams();
+  const router = useRouter();
   const cid = params.cid as string;
   const course = courses.find((course) => course._id === cid);
   const pathname = usePathname();
+  
+  const { currentUser } = useSelector((state: any) => state.accountReducer);
+  const { enrollments } = useSelector((state: any) => state.enrollmentsReducer);
+  
+  // Check if user is enrolled in this course
+  const isEnrolled = enrollments.some((enrollment: any) => 
+    enrollment.user === currentUser?._id && enrollment.course === cid
+  );
+  
+  // Protect route - redirect to dashboard if not enrolled (unless faculty)
+  useEffect(() => {
+    if (currentUser && currentUser.role !== "FACULTY" && !isEnrolled) {
+      router.push("/Dashboard");
+    }
+  }, [currentUser, isEnrolled, router]);
+  
+  // Show loading or redirect message while checking enrollment
+  if (currentUser && currentUser.role !== "FACULTY" && !isEnrolled) {
+    return (
+      <div className="text-center p-4">
+        <h3>Access Denied</h3>
+        <p>You must be enrolled in this course to access its content.</p>
+        <p>Redirecting to Dashboard...</p>
+      </div>
+    );
+  }
   
   return (
     <div id="wd-courses">
       <h2 className="text-danger">
         <FaAlignJustify className="me-4 fs-4 mb-1" />
-          {course?.number} &gt; {pathname.split("/").pop()} 
+          {course?.name}
       </h2>
       <hr />
       <div className="d-flex">

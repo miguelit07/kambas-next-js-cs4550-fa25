@@ -1,28 +1,84 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
-import { assignments } from "../../../../Database";
+import { useSelector, useDispatch } from "react-redux";
+import { addAssignment, updateAssignment } from "../reducer";
+import { useState, useEffect } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 interface Assignment {
   _id: string;
   title: string;
   course: string;
+  description?: string;
+  points?: number;
+  dueDate?: string;
+  availableFromDate?: string;
+  availableUntilDate?: string;
 }
 
 export default function AssignmentEditor() {
   const params = useParams();
   const router = useRouter();
+  const dispatch = useDispatch();
   const cid = params.cid as string;
   const aid = params.aid as string;
   
-  // Find the specific assignment
-  const assignment = (assignments as Assignment[]).find((a) => a._id === aid && a.course === cid);
+  const { assignments } = useSelector((state: any) => state.assignmentsReducer);
+  
+  // Check if this is a new assignment
+  const isNewAssignment = aid === "new";
+  
+  // Find the specific assignment if editing
+  const existingAssignment = !isNewAssignment 
+    ? assignments.find((a: Assignment) => a._id === aid && a.course === cid)
+    : null;
+
+  // Local state for the assignment form
+  const [assignment, setAssignment] = useState<Assignment>({
+    _id: "",
+    title: "",
+    course: cid,
+    description: "",
+    points: 100,
+    dueDate: "",
+    availableFromDate: "",
+    availableUntilDate: "",
+  });
+
+  // Initialize form with existing assignment data or defaults
+  useEffect(() => {
+    if (existingAssignment) {
+      setAssignment(existingAssignment);
+    } else if (isNewAssignment) {
+      setAssignment({
+        _id: uuidv4(),
+        title: "New Assignment",
+        course: cid,
+        description: "",
+        points: 100,
+        dueDate: "",
+        availableFromDate: "",
+        availableUntilDate: "",
+      });
+    }
+  }, [existingAssignment, isNewAssignment, cid]);
   
   // Navigation function to go back to assignments
   const navigateToAssignments = () => {
     router.push(`/Courses/${cid}/Assignments`);
   };
+
+  // Save assignment
+  const saveAssignment = () => {
+    if (isNewAssignment) {
+      dispatch(addAssignment(assignment));
+    } else {
+      dispatch(updateAssignment(assignment));
+    }
+    navigateToAssignments();
+  };
   
-  if (!assignment) {
+  if (!isNewAssignment && !existingAssignment) {
     return (
       <div className="p-4">
         <h3>Assignment Not Found</h3>
@@ -42,7 +98,12 @@ export default function AssignmentEditor() {
         <label htmlFor="wd-name" className="form-label">
           Assignment Name
         </label>
-        <input id="wd-name" defaultValue={assignment.title} className="form-control" />
+        <input 
+          id="wd-name" 
+          value={assignment.title} 
+          onChange={(e) => setAssignment({ ...assignment, title: e.target.value })}
+          className="form-control" 
+        />
       </div>
 
       {/* Description */}
@@ -52,7 +113,8 @@ export default function AssignmentEditor() {
         </label>
         <textarea
           id="wd-description"
-          defaultValue={`${assignment.title} - This assignment is available online. Submit a link to the landing page...`}
+          value={assignment.description}
+          onChange={(e) => setAssignment({ ...assignment, description: e.target.value })}
           className="form-control"
           rows={5}
         />
@@ -63,7 +125,13 @@ export default function AssignmentEditor() {
         <label htmlFor="wd-points" className="form-label">
           Points
         </label>
-        <input id="wd-points" defaultValue={100} className="form-control" />
+        <input 
+          id="wd-points" 
+          type="number"
+          value={assignment.points} 
+          onChange={(e) => setAssignment({ ...assignment, points: parseInt(e.target.value) || 0 })}
+          className="form-control" 
+        />
       </div>
 
       {/* Assignment Group */}
@@ -165,6 +233,8 @@ export default function AssignmentEditor() {
             <input
               type="datetime-local"
               id="wd-due-date"
+              value={assignment.dueDate}
+              onChange={(e) => setAssignment({ ...assignment, dueDate: e.target.value })}
               className="form-control"
             />
           </div>
@@ -177,6 +247,8 @@ export default function AssignmentEditor() {
             <input
               type="datetime-local"
               id="wd-available-from"
+              value={assignment.availableFromDate}
+              onChange={(e) => setAssignment({ ...assignment, availableFromDate: e.target.value })}
               className="form-control"
             />
           </div>
@@ -189,6 +261,8 @@ export default function AssignmentEditor() {
             <input
               type="datetime-local"
               id="wd-available-until"
+              value={assignment.availableUntilDate}
+              onChange={(e) => setAssignment({ ...assignment, availableUntilDate: e.target.value })}
               className="form-control"
             />
           </div>
@@ -209,7 +283,7 @@ export default function AssignmentEditor() {
           id="submit-btn" 
           type="button" 
           className="btn btn-danger"
-          onClick={navigateToAssignments}
+          onClick={saveAssignment}
         >
           Save
         </button>
