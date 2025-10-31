@@ -67,7 +67,7 @@ export default function Modules() {
               </div>
               {module.lessons && module.lessons.length > 0 && (
                 <ListGroup className="wd-lessons rounded-0">
-                  {module.lessons.map((lesson) => (
+                  {module.lessons.map((lesson: any) => (
                     <ListGroupItem
                       key={lesson._id}
                       className="wd-lesson p-3 ps-1"
