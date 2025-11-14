@@ -2,9 +2,10 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
-import { addAssignment, updateAssignment } from "../reducer";
+import { setAssignments } from "../reducer";
 import { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
+import * as client from "../../../../Assignments/client";
 
 interface Assignment {
   _id: string;
@@ -70,13 +71,20 @@ export default function AssignmentEditor() {
   };
 
   // Save assignment
-  const saveAssignment = () => {
-    if (isNewAssignment) {
-      dispatch(addAssignment(assignment));
-    } else {
-      dispatch(updateAssignment(assignment));
+  const saveAssignment = async () => {
+    try {
+      if (isNewAssignment) {
+        await client.createAssignmentForCourse(cid, assignment);
+      } else {
+        await client.updateAssignment(assignment);
+      }
+      // Refresh the assignments list by fetching from server
+      const updatedAssignments = await client.findAssignmentsForCourse(cid);
+      dispatch(setAssignments(updatedAssignments));
+      navigateToAssignments();
+    } catch (error) {
+      console.error("Error saving assignment:", error);
     }
-    navigateToAssignments();
   };
   
   if (!isNewAssignment && !existingAssignment) {

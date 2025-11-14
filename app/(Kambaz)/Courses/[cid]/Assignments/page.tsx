@@ -6,7 +6,9 @@ import { BsBook, BsGripVertical } from "react-icons/bs";
 import { FaPlus } from "react-icons/fa";
 import AssignmentControlButtons from "./AssignmentControlButtons";
 import { useSelector, useDispatch } from "react-redux";
-import { deleteAssignment } from "./reducer";
+import { setAssignments } from "./reducer";
+import { useEffect } from "react";
+import * as client from "../../../Assignments/client";
 
 interface Assignment {
   _id: string;
@@ -22,8 +24,21 @@ export default function Assignments() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { assignments } = useSelector((state: any) => state.assignmentsReducer);
   
-  // Filter assignments for the current course
-  const courseAssignments = assignments.filter((assignment: Assignment) => assignment.course === cid);
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      const assignments = await client.findAssignmentsForCourse(cid);
+      dispatch(setAssignments(assignments));
+    };
+    fetchAssignments();
+  }, [cid, dispatch]);
+
+  const onDeleteAssignment = async (assignmentId: string) => {
+    await client.deleteAssignment(assignmentId);
+    dispatch(setAssignments(assignments.filter((a: Assignment) => a._id !== assignmentId)));
+  };
+  
+  // No need to filter assignments since they're already filtered server-side
+  const courseAssignments = assignments;
 
   return (
     <div>
@@ -58,7 +73,7 @@ export default function Assignments() {
                   <AssignmentControlButtons 
                     assignmentId={assignment._id}
                     deleteAssignment={(assignmentId) => {
-                      dispatch(deleteAssignment(assignmentId));
+                      onDeleteAssignment(assignmentId);
                     }}
                   />
                   <div className="small text-muted mt-1 ps-5">

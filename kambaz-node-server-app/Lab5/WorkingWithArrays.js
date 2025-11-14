@@ -1,8 +1,28 @@
 let todos = [
-  { id: 1, title: "Task 1", completed: false, description: "First task description" },
-  { id: 2, title: "Task 2", completed: true, description: "Second task description" },
-  { id: 3, title: "Task 3", completed: false, description: "Third task description" },
-  { id: 4, title: "Task 4", completed: true, description: "Fourth task description" },
+  {
+    id: 1,
+    title: "Task 1",
+    completed: false,
+    description: "First task description",
+  },
+  {
+    id: 2,
+    title: "Task 2",
+    completed: true,
+    description: "Second task description",
+  },
+  {
+    id: 3,
+    title: "Task 3",
+    completed: false,
+    description: "Third task description",
+  },
+  {
+    id: 4,
+    title: "Task 4",
+    completed: true,
+    description: "Fourth task description",
+  },
 ];
 
 export default function WorkingWithArrays(app) {
@@ -18,7 +38,7 @@ export default function WorkingWithArrays(app) {
 
     res.json(todos);
   };
-  
+
   const createNewTodo = (req, res) => {
     const newTodo = {
       id: new Date().getTime(),
@@ -29,34 +49,55 @@ export default function WorkingWithArrays(app) {
     todos.push(newTodo);
     res.json(todos);
   };
-  
+
+  const postNewTodo = (req, res) => {
+    const newTodo = { ...req.body, id: new Date().getTime() };
+    todos.push(newTodo);
+    res.json(newTodo);
+  };
+
   const getTodoById = (req, res) => {
     const { id } = req.params;
     const todo = todos.find((t) => t.id === parseInt(id));
     res.json(todo);
   };
-  
+
   const removeTodo = (req, res) => {
     const { id } = req.params;
     const todoIndex = todos.findIndex((t) => t.id === parseInt(id));
+    if (todoIndex === -1) {
+      res.status(404).json({ message: `Unable to remove Todo with ID ${id}` });
+      return;
+    }
     todos.splice(todoIndex, 1);
     res.json(todos);
   };
-  
+
   const updateTodoTitle = (req, res) => {
     const { id, title } = req.params;
     const todo = todos.find((t) => t.id === parseInt(id));
     todo.title = title;
     res.json(todos);
   };
-  
+  const deleteTodo = (req, res) => {
+    const { id } = req.params;
+    const todoIndex = todos.findIndex((t) => t.id === parseInt(id));
+    if (todoIndex === -1) {
+      res.status(404).json({ message: `Unable to delete Todo with ID ${id}` });
+      return;
+    }
+
+    todos.splice(todoIndex, 1);
+    res.sendStatus(200);
+  };
+
   const updateTodoDescription = (req, res) => {
     const { id, description } = req.params;
     const todo = todos.find((t) => t.id === parseInt(id));
     todo.description = description;
     res.json(todos);
   };
-  
+
   const updateTodoCompleted = (req, res) => {
     const { id, completed } = req.params;
     const todo = todos.find((t) => t.id === parseInt(id));
@@ -64,7 +105,25 @@ export default function WorkingWithArrays(app) {
     res.json(todos);
   };
 
+  const updateTodo = (req, res) => {
+    const { id } = req.params;
+    const todoIndex = todos.findIndex((t) => t.id === parseInt(id));
+    if (todoIndex === -1) {
+      res.status(404).json({ message: `Unable to update Todo with ID ${id}` });
+      return;
+    }
+
+    todos = todos.map((t) => {
+      if (t.id === parseInt(id)) {
+        return { ...t, ...req.body };
+      }
+      return t;
+    });
+    res.sendStatus(200);
+  };
+
   // Route declarations grouped at the bottom
+  app.delete("/lab5/todos/:id", deleteTodo);
   app.get("/lab5/todos", getTodos);
   app.get("/lab5/todos/create", createNewTodo);
   app.get("/lab5/todos/:id/delete", removeTodo);
@@ -72,4 +131,6 @@ export default function WorkingWithArrays(app) {
   app.get("/lab5/todos/:id/description/:description", updateTodoDescription);
   app.get("/lab5/todos/:id/completed/:completed", updateTodoCompleted);
   app.get("/lab5/todos/:id", getTodoById);
+  app.post("/lab5/todos", postNewTodo);
+  app.put("/lab5/todos/:id", updateTodo);
 }

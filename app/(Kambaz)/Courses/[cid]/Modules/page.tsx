@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { FormControl, ListGroup, ListGroupItem } from "react-bootstrap";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import ModulesControls from "./ModulesControls";
 import { BsGripVertical } from "react-icons/bs";
 import ModulesControlsButton from "./ModulesControlsButton";
 import LessonControlButtons from "./LessonControlButtons";
-import { addModule, editModule, updateModule, deleteModule } from "./reducer";
+import { setModules, editModule, updateModule } from "./reducer";
 import { useSelector, useDispatch } from "react-redux";
+import * as client from "../../client";
 
 export default function Modules() {
   const { cid } = useParams();
@@ -16,24 +17,47 @@ export default function Modules() {
   const { modules } = useSelector((state: any) => state.modulesReducer);
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    const fetchModules = async () => {
+      const modules = await client.findModulesForCourse(cid as string);
+      dispatch(setModules(modules));
+    };
+    fetchModules();
+  }, [cid, dispatch]);
+
+  const onCreateModuleForCourse = async () => {
+    if (!cid) return;
+    const newModule = { name: moduleName, course: cid };
+    const createdModule = await client.createModuleForCourse(cid as string, newModule);
+    dispatch(setModules([...modules, createdModule]));
+    setModuleName("");
+  };
+
+  const onDeleteModule = async (moduleId: string) => {
+    await client.deleteModule(moduleId);
+    dispatch(setModules(modules.filter((m: any) => m._id !== moduleId)));
+  };
+
+  const onUpdateModule = async (module: any) => {
+    const updatedModule = await client.updateModule(module);
+    dispatch(setModules(modules.map((m: any) => 
+      m._id === module._id ? updatedModule : m
+    )));
+  };
+
   return (
     <div>
       <ModulesControls
         moduleName={moduleName}
         setModuleName={setModuleName}
-        addModule={() => {
-          dispatch(addModule({ name: moduleName, course: cid }));
-          setModuleName("");
-        }}
+        addModule={onCreateModuleForCourse}
       />
       <br />
       <br />
       <br />
       <br />
       <ListGroup className="rounded-0" id="wd-modules">
-        {modules
-          .filter((module: any) => module.course === cid)
-          .map((module: any) => (
+        {modules.map((module: any) => (
             <ListGroupItem
               key={module._id}
               className="wd-module p-0 mb-5 fs-5 border-gray"
@@ -49,9 +73,10 @@ export default function Modules() {
                         updateModule({ ...module, name: e.target.value })
                       )
                     }
-                    onKeyDown={(e) => {
+                    onKeyDown={async (e) => {
                       if (e.key === "Enter") {
-                        dispatch(updateModule({ ...module, editing: false }));
+                        const updatedModule = { ...module, editing: false };
+                        await onUpdateModule(updatedModule);
                       }
                     }}
                     defaultValue={module.name}
@@ -60,7 +85,7 @@ export default function Modules() {
                 <ModulesControlsButton
                   moduleId={module._id}
                   deleteModule={(moduleId) => {
-                    dispatch(deleteModule(moduleId));
+                    onDeleteModule(moduleId);
                   }}
                   editModule={(moduleId) => dispatch(editModule(moduleId))}
                 />
@@ -83,8 +108,7 @@ export default function Modules() {
           ))}
 
         {/* Show a message if no modules found for this course */}
-        {modules.filter((module: any) => module.course === cid).length ===
-          0 && (
+        {modules.length === 0 && (
           <ListGroupItem className="wd-module p-3 text-center text-muted">
             No modules found for this course.
           </ListGroupItem>

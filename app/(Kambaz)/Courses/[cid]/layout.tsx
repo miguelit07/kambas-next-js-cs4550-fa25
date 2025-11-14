@@ -19,19 +19,16 @@ export default function CoursesLayout({
   const { currentUser } = useSelector((state: any) => state.accountReducer);
   const { enrollments } = useSelector((state: any) => state.enrollmentsReducer);
   
-  // Check if user is enrolled in this course
   const isEnrolled = enrollments.some((enrollment: any) => 
     enrollment.user === currentUser?._id && enrollment.course === cid
   );
   
-  // Protect route - redirect to dashboard if not enrolled (unless faculty)
   useEffect(() => {
     if (currentUser && currentUser.role !== "FACULTY" && !isEnrolled) {
       router.push("/Dashboard");
     }
   }, [currentUser, isEnrolled, router]);
   
-  // Show loading or redirect message while checking enrollment
   if (currentUser && currentUser.role !== "FACULTY" && !isEnrolled) {
     return (
       <div className="text-center p-4">
