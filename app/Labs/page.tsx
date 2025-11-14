@@ -27,6 +27,11 @@ export default function Labs() {
                 Lab 4: Maintaining State in React Applications{" "}
               </Link>
             </li>
+            <li>
+              <Link href="/Labs/Lab5" id="wd-lab5-link">
+                Lab 5{" "}
+              </Link>
+            </li>
           </ul>
         </div>
       </body>
