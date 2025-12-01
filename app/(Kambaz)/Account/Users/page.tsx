@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { FormControl } from "react-bootstrap";
 import PeopleTable from "../../Courses/[cid]/People/Table/page";
 import * as client from "../../Account/client";
+import { FaPlus } from "react-icons/fa6";
 
 export default function Users() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -11,7 +12,20 @@ export default function Users() {
   const { uid } = useParams();
   const [role, setRole] = useState("");
   const [name, setName] = useState("");
-  
+
+  const createUser = async () => {
+    const user = await client.createUser({
+      firstName: "New",
+      lastName: `User${users.length + 1}`,
+      username: `newuser${Date.now()}`,
+      password: "password123",
+      email: `email${users.length + 1}@neu.edu`,
+      section: "S101",
+      role: "STUDENT",
+    });
+    setUsers([...users, user]);
+  };
+
   const filterUsersByRole = async (role: string) => {
     setRole(role);
     if (role) {
@@ -21,7 +35,7 @@ export default function Users() {
       fetchUsers();
     }
   };
-  
+
   const filterUsersByName = async (name: string) => {
     setName(name);
     if (name) {
@@ -41,11 +55,18 @@ export default function Users() {
   }, [uid]);
   return (
     <div>
+      <button
+        onClick={createUser}
+        className="float-end btn btn-danger wd-add-people"
+      >
+        <FaPlus className="me-2" />
+        Users
+      </button>
       <h3>Users</h3>
-      <FormControl 
-        onChange={(e) => filterUsersByName(e.target.value)} 
+      <FormControl
+        onChange={(e) => filterUsersByName(e.target.value)}
         placeholder="Search people"
-        className="float-start w-25 me-2 wd-filter-by-name" 
+        className="float-start w-25 me-2 wd-filter-by-name"
       />
       <select
         value={role}
