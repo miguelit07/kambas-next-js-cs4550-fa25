@@ -49,12 +49,12 @@ export const createModuleForCourse = async (courseId: string, module: any) => {
   return response.data;
 };
 
-export const deleteModule = async (moduleId: string) => {
-  const { data } = await axiosWithCredentials.delete(`${HTTP_SERVER}/api/modules/${moduleId}`);
+export const deleteModule = async (courseId: string, moduleId: string) => {
+  const { data } = await axiosWithCredentials.delete(`${COURSES_API}/${courseId}/modules/${moduleId}`);
   return data;
 };
 
-export const updateModule = async (module: any) => {
-  const { data } = await axiosWithCredentials.put(`${HTTP_SERVER}/api/modules/${module._id}`, module);
+export const updateModule = async (courseId: string, module: any) => {
+  const { data } = await axiosWithCredentials.put(`${COURSES_API}/${courseId}/modules/${module._id}`, module);
   return data;
 };
