@@ -20,11 +20,21 @@ export default function CoursesLayout({
   const { enrollments } = useSelector((state: any) => state.enrollmentsReducer);
   
   const isEnrolled = enrollments.some((enrollment: any) => 
-    enrollment.user === currentUser?._id && enrollment.course === cid
+    enrollment.user === currentUser?._id && (enrollment.course?._id === cid || enrollment.course === cid)
   );
+  
+  // Debug logging
+  console.log("Course Layout Debug:", {
+    currentUser: currentUser?._id,
+    cid,
+    enrollments,
+    isEnrolled,
+    isFaculty: currentUser?.role === "FACULTY"
+  });
   
   useEffect(() => {
     if (currentUser && currentUser.role !== "FACULTY" && !isEnrolled) {
+      console.log("Redirecting to Dashboard - not enrolled");
       router.push("/Dashboard");
     }
   }, [currentUser, isEnrolled, router]);

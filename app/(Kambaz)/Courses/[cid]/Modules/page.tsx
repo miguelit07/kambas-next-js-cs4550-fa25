@@ -19,8 +19,14 @@ export default function Modules() {
 
   useEffect(() => {
     const fetchModules = async () => {
-      const modules = await client.findModulesForCourse(cid as string);
-      dispatch(setModules(modules));
+      try {
+        const modules = await client.findModulesForCourse(cid as string);
+        console.log("Fetched modules:", modules, "Type:", typeof modules, "Is array:", Array.isArray(modules));
+        dispatch(setModules(Array.isArray(modules) ? modules : []));
+      } catch (error) {
+        console.error("Error fetching modules:", error);
+        dispatch(setModules([]));
+      }
     };
     fetchModules();
   }, [cid, dispatch]);
@@ -57,7 +63,7 @@ export default function Modules() {
       <br />
       <br />
       <ListGroup className="rounded-0" id="wd-modules">
-        {modules.map((module: any) => (
+        {Array.isArray(modules) ? modules.map((module: any) => (
             <ListGroupItem
               key={module._id}
               className="wd-module p-0 mb-5 fs-5 border-gray"
@@ -105,10 +111,10 @@ export default function Modules() {
                 </ListGroup>
               )}
             </ListGroupItem>
-          ))}
+          )) : null}
 
         {/* Show a message if no modules found for this course */}
-        {modules.length === 0 && (
+        {Array.isArray(modules) && modules.length === 0 && (
           <ListGroupItem className="wd-module p-3 text-center text-muted">
             No modules found for this course.
           </ListGroupItem>

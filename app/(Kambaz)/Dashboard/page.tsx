@@ -39,14 +39,28 @@ export default function Dashboard() {
 
   const [showAllCourses, setShowAllCourses] = useState(false);
 
+  const isStudent = currentUser?.role === "STUDENT";
+  const isFaculty = currentUser?.role === "FACULTY" || currentUser?.role === "ADMIN";
+
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        // If no current user, show all courses instead of trying to fetch "my courses"
-        const shouldFetchAllCourses = showAllCourses || !currentUser;
-        const courses = shouldFetchAllCourses 
-          ? await client.findAllCourses()
-          : await client.findMyCourses();
+        let courses;
+        
+        if (!currentUser) {
+          // Not logged in - show all courses for browsing
+          courses = await client.findAllCourses();
+        } else if (showAllCourses || isStudent) {
+          // Students browsing for enrollment OR explicit show all
+          courses = await client.findAllCourses();
+        } else if (isFaculty) {
+          // Faculty - show only their created courses
+          courses = await client.findMyCourses();
+        } else {
+          // Default fallback
+          courses = await client.findMyCourses();
+        }
+        
         dispatch(setCourses(courses));
       } catch (error: any) {
         console.error("Failed to fetch courses:", error);
@@ -63,7 +77,7 @@ export default function Dashboard() {
     };
     
     fetchCourses();
-  }, [currentUser, showAllCourses, dispatch]);
+  }, [currentUser, showAllCourses, dispatch, isFaculty, isStudent]);
 
   // Fetch enrollments for the current user
   useEffect(() => {
@@ -84,13 +98,16 @@ export default function Dashboard() {
   }, [currentUser, dispatch]);
 
   // Get user's enrolled courses
-  const userEnrollments = enrollments.filter(
-    (enrollment: any) => enrollment.user === currentUser?._id
+  const enrolledCourseIds = enrollments.map(
+    (enrollment: any) => enrollment.course?._id || enrollment.course
   );
 
-  const enrolledCourseIds = userEnrollments.map(
-    (enrollment: any) => enrollment.course
-  );
+  // Debug logging
+  console.log("Dashboard Debug:", {
+    currentUser: currentUser?._id,
+    enrollments,
+    enrolledCourseIds
+  });
 
   // Since server already filters courses based on showAllCourses, we can use courses directly
   const displayedCourses = courses;
@@ -112,8 +129,11 @@ export default function Dashboard() {
         // Refresh enrollments after successful operation
         const updatedEnrollments = await enrollmentsClient.findMyEnrollments();
         dispatch(setEnrollments(updatedEnrollments));
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to update enrollment:", error);
+        console.error("Error response:", error.response?.data);
+        console.error("Error status:", error.response?.status);
+        alert(`Enrollment failed: ${error.response?.data?.error || error.message}`);
       }
     }
   };
@@ -168,50 +188,54 @@ export default function Dashboard() {
           variant="primary"
           className="float-end"
           onClick={() => setShowAllCourses(!showAllCourses)}
-          disabled={!currentUser} // Disable toggle if not authenticated
+          disabled={!currentUser}
         >
-          {!currentUser ? "All Courses" : (showAllCourses ? "My Courses" : "All Courses")}
+          {!currentUser ? "All Courses" : (
+            isStudent ? (showAllCourses ? "Enrolled Courses" : "Browse Courses") :
+            (showAllCourses ? "My Courses" : "All Courses")
+          )}
         </Button>
       </h1>
       <hr />
-      <h5>
-        New Course
-        <button
-          className="btn btn-primary float-end"
-          id="wd-add-new-course-click"
-          onClick={onAddNewCourse}
-          disabled={!currentUser}
-        >
-          {" "}
-          Add{" "}
-        </button>
-        <button
-          className="btn btn-warning float-end me-2"
-          onClick={onUpdateCourse}
-          id="wd-update-course-click"
-          disabled={!currentUser}
-        >
-          Update{" "}
-        </button>
-      </h5>
-      <br />
-      <FormControl
-        value={course.name}
-        className="mb-2"
-        placeholder="Course Name"
-        onChange={(e) => setCourse({ ...course, name: e.target.value })}
-        disabled={!currentUser}
-      />
-      <FormControl
-        value={course.description}
-        as="textarea"
-        rows={3}
-        className="mb-2"
-        placeholder="Course Description"
-        onChange={(e) => setCourse({ ...course, description: e.target.value })}
-        disabled={!currentUser}
-      />
-      <hr />
+      
+      {/* Course creation form - only show to Faculty/Admin */}
+      {isFaculty && (
+        <>
+          <h5>
+            New Course
+            <button
+              className="btn btn-primary float-end"
+              id="wd-add-new-course-click"
+              onClick={onAddNewCourse}
+            >
+              Add
+            </button>
+            <button
+              className="btn btn-warning float-end me-2"
+              onClick={onUpdateCourse}
+              id="wd-update-course-click"
+            >
+              Update
+            </button>
+          </h5>
+          <br />
+          <FormControl
+            value={course.name}
+            className="mb-2"
+            placeholder="Course Name"
+            onChange={(e) => setCourse({ ...course, name: e.target.value })}
+          />
+          <FormControl
+            value={course.description}
+            as="textarea"
+            rows={3}
+            className="mb-2"
+            placeholder="Course Description"
+            onChange={(e) => setCourse({ ...course, description: e.target.value })}
+          />
+          <hr />
+        </>
+      )}
       <h2 id="wd-dashboard-published">
         {!currentUser || showAllCourses
           ? `All Courses (${courses.length})`
@@ -252,7 +276,7 @@ export default function Dashboard() {
                   )}
 
                   {/* Faculty controls - only for faculty */}
-                  {currentUser?.role === "FACULTY" && (
+                  {isFaculty && (
                     <>
                       <button
                         className="btn btn-danger float-end"
@@ -277,8 +301,8 @@ export default function Dashboard() {
                     </>
                   )}
 
-                  {/* Enrollment controls - for students */}
-                  {currentUser && currentUser.role !== "FACULTY" && (
+                  {/* Enrollment controls - for students and other non-faculty users */}
+                  {currentUser && !isFaculty && (
                     <Button
                       variant={isEnrolled(course._id) ? "danger" : "success"}
                       className="float-end"
