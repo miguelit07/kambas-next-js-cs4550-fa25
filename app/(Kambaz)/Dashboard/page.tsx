@@ -268,8 +268,8 @@ export default function Dashboard() {
                     {course.description}{" "}
                   </CardText>
 
-                  {/* Course navigation - only for enrolled users */}
-                  {isEnrolled(course._id) && (
+                  {/* Course navigation - for enrolled users and faculty */}
+                  {(isEnrolled(course._id) || isFaculty) && (
                     <Link href={`/Courses/${course._id}/Home`}>
                       <Button variant="primary">Go</Button>
                     </Link>
