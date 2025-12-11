@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   Button,
@@ -367,16 +367,25 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
 interface QuestionsTabProps {
   questions: Question[];
   onUpdateQuestions: (questions: Question[]) => void;
+  onLocalQuestionsChange?: (questions: Question[]) => void;
 }
 
 export const QuestionsTab: React.FC<QuestionsTabProps> = ({ 
   questions, 
-  onUpdateQuestions 
+  onUpdateQuestions,
+  onLocalQuestionsChange
 }) => {
   const [localQuestions, setLocalQuestions] = useState<Question[]>(questions);
   const [hasChanges, setHasChanges] = useState(false);
 
   const totalPoints = localQuestions.reduce((sum, q) => sum + q.points, 0);
+
+  // Notify parent of local question changes
+  useEffect(() => {
+    if (onLocalQuestionsChange) {
+      onLocalQuestionsChange(localQuestions);
+    }
+  }, [localQuestions, onLocalQuestionsChange]);
 
   const addNewQuestion = () => {
     const newQuestion: Question = {

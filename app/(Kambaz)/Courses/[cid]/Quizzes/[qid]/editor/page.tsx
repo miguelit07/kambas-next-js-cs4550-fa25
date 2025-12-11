@@ -12,9 +12,13 @@ import {
   Nav,
   Tab,
   Alert,
-  FloatingLabel
+  FloatingLabel,
 } from "react-bootstrap";
-import { findQuizById, updateQuiz, publishQuiz } from "@/app/(Kambaz)/Quizzes/client";
+import {
+  findQuizById,
+  updateQuiz,
+  publishQuiz,
+} from "@/app/(Kambaz)/Quizzes/client";
 import { QuestionsTab } from "./QuestionsTab";
 
 interface RootState {
@@ -43,14 +47,22 @@ interface Quiz {
   _id: string;
   title: string;
   description?: string;
-  quizType: "GRADED_QUIZ" | "PRACTICE_QUIZ" | "GRADED_SURVEY" | "UNGRADED_SURVEY";
+  quizType:
+    | "GRADED_QUIZ"
+    | "PRACTICE_QUIZ"
+    | "GRADED_SURVEY"
+    | "UNGRADED_SURVEY";
   points: number;
   assignmentGroup: "QUIZZES" | "EXAMS" | "ASSIGNMENTS" | "PROJECT";
   shuffleAnswers: boolean;
   timeLimit: number; // in minutes
   multipleAttempts: boolean;
   howManyAttempts: number;
-  showCorrectAnswers: "IMMEDIATELY" | "AFTER_LAST_ATTEMPT" | "NEVER" | "AFTER_DUE_DATE";
+  showCorrectAnswers:
+    | "IMMEDIATELY"
+    | "AFTER_LAST_ATTEMPT"
+    | "NEVER"
+    | "AFTER_DUE_DATE";
   accessCode?: string;
   oneQuestionAtTime: boolean;
   webcamRequired: boolean;
@@ -66,11 +78,14 @@ interface Quiz {
 export default function QuizEditor() {
   const { cid, qid } = useParams();
   const router = useRouter();
-  const { currentUser } = useSelector((state: RootState) => state.accountReducer);
-  
+  const { currentUser } = useSelector(
+    (state: RootState) => state.accountReducer
+  );
+
   const [activeTab, setActiveTab] = useState("details");
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [formData, setFormData] = useState<Partial<Quiz>>({});
+  const [currentQuestions, setCurrentQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -91,9 +106,15 @@ export default function QuizEditor() {
         setQuiz(quizData);
         setFormData({
           ...quizData,
-          dueDate: quizData.dueDate ? new Date(quizData.dueDate).toISOString().slice(0, 16) : "",
-          availableDate: quizData.availableDate ? new Date(quizData.availableDate).toISOString().slice(0, 16) : "",
-          untilDate: quizData.untilDate ? new Date(quizData.untilDate).toISOString().slice(0, 16) : "",
+          dueDate: quizData.dueDate
+            ? new Date(quizData.dueDate).toISOString().slice(0, 16)
+            : "",
+          availableDate: quizData.availableDate
+            ? new Date(quizData.availableDate).toISOString().slice(0, 16)
+            : "",
+          untilDate: quizData.untilDate
+            ? new Date(quizData.untilDate).toISOString().slice(0, 16)
+            : "",
         });
       } catch (err: unknown) {
         console.error("Failed to fetch quiz:", err);
@@ -108,20 +129,27 @@ export default function QuizEditor() {
     }
   }, [qid, isFaculty, router, cid]);
 
-  const handleInputChange = (field: keyof Quiz, value: string | boolean | number) => {
-    setFormData(prev => ({
+  const handleInputChange = (
+    field: keyof Quiz,
+    value: string | boolean | number
+  ) => {
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleQuestionsUpdate = (questions: Question[]) => {
     const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       questions,
-      points: totalPoints
+      points: totalPoints,
     }));
+  };
+
+  const handleLocalQuestionsChange = (questions: Question[]) => {
+    setCurrentQuestions(questions);
   };
 
   const handleSave = async (shouldPublish = false) => {
@@ -130,15 +158,30 @@ export default function QuizEditor() {
       setError("");
       setSuccess("");
 
+      // Use current questions if they exist, otherwise fall back to formData questions
+      const questionsToSave =
+        currentQuestions.length > 0
+          ? currentQuestions
+          : formData.questions || [];
+      const totalPoints = questionsToSave.reduce((sum, q) => sum + q.points, 0);
+
       const updateData = {
         ...formData,
-        dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
-        availableDate: formData.availableDate ? new Date(formData.availableDate).toISOString() : null,
-        untilDate: formData.untilDate ? new Date(formData.untilDate).toISOString() : null,
+        questions: questionsToSave,
+        points: totalPoints,
+        dueDate: formData.dueDate
+          ? new Date(formData.dueDate).toISOString()
+          : null,
+        availableDate: formData.availableDate
+          ? new Date(formData.availableDate).toISOString()
+          : null,
+        untilDate: formData.untilDate
+          ? new Date(formData.untilDate).toISOString()
+          : null,
       };
 
       await updateQuiz(updateData);
-      
+
       if (shouldPublish) {
         await publishQuiz(qid as string);
         setSuccess("Quiz saved and published successfully!");
@@ -187,11 +230,17 @@ export default function QuizEditor() {
           <div className="d-flex justify-content-between align-items-center">
             <div>
               <h2>Quiz Editor</h2>
-              <p className="text-muted mb-0">{formData.title || "Unnamed Quiz"}</p>
+              <p className="text-muted mb-0">
+                {formData.title || "Unnamed Quiz"}
+              </p>
             </div>
             <div className="d-flex align-items-center gap-2">
               <span className="text-muted">Points: {formData.points || 0}</span>
-              <span className={`badge ${formData.published ? "bg-success" : "bg-secondary"}`}>
+              <span
+                className={`badge ${
+                  formData.published ? "bg-success" : "bg-secondary"
+                }`}
+              >
                 {formData.published ? "Published" : "Not Published"}
               </span>
             </div>
@@ -200,11 +249,22 @@ export default function QuizEditor() {
       </Row>
 
       {/* Alerts */}
-      {error && <Alert variant="danger" dismissible onClose={() => setError("")}>{error}</Alert>}
-      {success && <Alert variant="success" dismissible onClose={() => setSuccess("")}>{success}</Alert>}
+      {error && (
+        <Alert variant="danger" dismissible onClose={() => setError("")}>
+          {error}
+        </Alert>
+      )}
+      {success && (
+        <Alert variant="success" dismissible onClose={() => setSuccess("")}>
+          {success}
+        </Alert>
+      )}
 
       {/* Tabs */}
-      <Tab.Container activeKey={activeTab} onSelect={(k) => setActiveTab(k || "details")}>
+      <Tab.Container
+        activeKey={activeTab}
+        onSelect={(k) => setActiveTab(k || "details")}
+      >
         <Nav variant="tabs" className="mb-3">
           <Nav.Item>
             <Nav.Link eventKey="details">Details</Nav.Link>
@@ -230,18 +290,25 @@ export default function QuizEditor() {
                         <Form.Control
                           type="text"
                           value={formData.title || ""}
-                          onChange={(e) => handleInputChange("title", e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("title", e.target.value)
+                          }
                           placeholder="Enter quiz title"
                         />
                       </FloatingLabel>
 
                       {/* Description */}
-                      <FloatingLabel label="Description (Optional)" className="mb-3">
+                      <FloatingLabel
+                        label="Description (Optional)"
+                        className="mb-3"
+                      >
                         <Form.Control
                           as="textarea"
                           style={{ height: "100px" }}
                           value={formData.description || ""}
-                          onChange={(e) => handleInputChange("description", e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("description", e.target.value)
+                          }
                           placeholder="Enter quiz description"
                         />
                       </FloatingLabel>
@@ -252,12 +319,23 @@ export default function QuizEditor() {
                           <FloatingLabel label="Quiz Type">
                             <Form.Select
                               value={formData.quizType || "GRADED_QUIZ"}
-                              onChange={(e) => handleInputChange("quizType", e.target.value as Quiz["quizType"])}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  "quizType",
+                                  e.target.value as Quiz["quizType"]
+                                )
+                              }
                             >
                               <option value="GRADED_QUIZ">Graded Quiz</option>
-                              <option value="PRACTICE_QUIZ">Practice Quiz</option>
-                              <option value="GRADED_SURVEY">Graded Survey</option>
-                              <option value="UNGRADED_SURVEY">Ungraded Survey</option>
+                              <option value="PRACTICE_QUIZ">
+                                Practice Quiz
+                              </option>
+                              <option value="GRADED_SURVEY">
+                                Graded Survey
+                              </option>
+                              <option value="UNGRADED_SURVEY">
+                                Ungraded Survey
+                              </option>
                             </Form.Select>
                           </FloatingLabel>
                         </Col>
@@ -265,7 +343,12 @@ export default function QuizEditor() {
                           <FloatingLabel label="Assignment Group">
                             <Form.Select
                               value={formData.assignmentGroup || "QUIZZES"}
-                              onChange={(e) => handleInputChange("assignmentGroup", e.target.value as Quiz["assignmentGroup"])}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  "assignmentGroup",
+                                  e.target.value as Quiz["assignmentGroup"]
+                                )
+                              }
                             >
                               <option value="QUIZZES">Quizzes</option>
                               <option value="EXAMS">Exams</option>
@@ -284,7 +367,12 @@ export default function QuizEditor() {
                               type="number"
                               min="0"
                               value={formData.points || 0}
-                              onChange={(e) => handleInputChange("points", parseInt(e.target.value) || 0)}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  "points",
+                                  parseInt(e.target.value) || 0
+                                )
+                              }
                               placeholder="Total points"
                             />
                           </FloatingLabel>
@@ -295,7 +383,12 @@ export default function QuizEditor() {
                               type="number"
                               min="1"
                               value={formData.timeLimit || 20}
-                              onChange={(e) => handleInputChange("timeLimit", parseInt(e.target.value) || 20)}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  "timeLimit",
+                                  parseInt(e.target.value) || 20
+                                )
+                              }
                               placeholder="Time limit in minutes"
                             />
                           </FloatingLabel>
@@ -303,11 +396,16 @@ export default function QuizEditor() {
                       </Row>
 
                       {/* Access Code */}
-                      <FloatingLabel label="Access Code (Optional)" className="mb-3">
+                      <FloatingLabel
+                        label="Access Code (Optional)"
+                        className="mb-3"
+                      >
                         <Form.Control
                           type="text"
                           value={formData.accessCode || ""}
-                          onChange={(e) => handleInputChange("accessCode", e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("accessCode", e.target.value)
+                          }
                           placeholder="Enter access code"
                         />
                       </FloatingLabel>
@@ -327,21 +425,36 @@ export default function QuizEditor() {
                           type="checkbox"
                           label="Shuffle Answers"
                           checked={formData.shuffleAnswers || false}
-                          onChange={(e) => handleInputChange("shuffleAnswers", e.target.checked)}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "shuffleAnswers",
+                              e.target.checked
+                            )
+                          }
                           className="mb-3"
                         />
                         <Form.Check
                           type="checkbox"
                           label="One Question at a Time"
                           checked={formData.oneQuestionAtTime !== false}
-                          onChange={(e) => handleInputChange("oneQuestionAtTime", e.target.checked)}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "oneQuestionAtTime",
+                              e.target.checked
+                            )
+                          }
                           className="mb-3"
                         />
                         <Form.Check
                           type="checkbox"
                           label="Webcam Required"
                           checked={formData.webcamRequired || false}
-                          onChange={(e) => handleInputChange("webcamRequired", e.target.checked)}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "webcamRequired",
+                              e.target.checked
+                            )
+                          }
                           className="mb-3"
                         />
                       </Col>
@@ -350,38 +463,68 @@ export default function QuizEditor() {
                           type="checkbox"
                           label="Multiple Attempts"
                           checked={formData.multipleAttempts || false}
-                          onChange={(e) => handleInputChange("multipleAttempts", e.target.checked)}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "multipleAttempts",
+                              e.target.checked
+                            )
+                          }
                           className="mb-3"
                         />
                         {formData.multipleAttempts && (
-                          <FloatingLabel label="How Many Attempts" className="mb-3">
+                          <FloatingLabel
+                            label="How Many Attempts"
+                            className="mb-3"
+                          >
                             <Form.Control
                               type="number"
                               min="1"
                               max="10"
                               value={formData.howManyAttempts || 1}
-                              onChange={(e) => handleInputChange("howManyAttempts", parseInt(e.target.value) || 1)}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  "howManyAttempts",
+                                  parseInt(e.target.value) || 1
+                                )
+                              }
                             />
                           </FloatingLabel>
                         )}
                         <Form.Check
                           type="checkbox"
                           label="Lock Questions After Answering"
-                          checked={formData.lockQuestionsAfterAnswering || false}
-                          onChange={(e) => handleInputChange("lockQuestionsAfterAnswering", e.target.checked)}
+                          checked={
+                            formData.lockQuestionsAfterAnswering || false
+                          }
+                          onChange={(e) =>
+                            handleInputChange(
+                              "lockQuestionsAfterAnswering",
+                              e.target.checked
+                            )
+                          }
                           className="mb-3"
                         />
                       </Col>
                     </Row>
 
                     {/* Show Correct Answers */}
-                    <FloatingLabel label="Show Correct Answers" className="mb-3">
+                    <FloatingLabel
+                      label="Show Correct Answers"
+                      className="mb-3"
+                    >
                       <Form.Select
                         value={formData.showCorrectAnswers || "IMMEDIATELY"}
-                        onChange={(e) => handleInputChange("showCorrectAnswers", e.target.value as Quiz["showCorrectAnswers"])}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "showCorrectAnswers",
+                            e.target.value as Quiz["showCorrectAnswers"]
+                          )
+                        }
                       >
                         <option value="IMMEDIATELY">Immediately</option>
-                        <option value="AFTER_LAST_ATTEMPT">After Last Attempt</option>
+                        <option value="AFTER_LAST_ATTEMPT">
+                          After Last Attempt
+                        </option>
                         <option value="AFTER_DUE_DATE">After Due Date</option>
                         <option value="NEVER">Never</option>
                       </Form.Select>
@@ -402,7 +545,9 @@ export default function QuizEditor() {
                         <Form.Control
                           type="datetime-local"
                           value={formData.availableDate || ""}
-                          onChange={(e) => handleInputChange("availableDate", e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("availableDate", e.target.value)
+                          }
                         />
                       </FloatingLabel>
 
@@ -410,7 +555,9 @@ export default function QuizEditor() {
                         <Form.Control
                           type="datetime-local"
                           value={formData.dueDate || ""}
-                          onChange={(e) => handleInputChange("dueDate", e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("dueDate", e.target.value)
+                          }
                         />
                       </FloatingLabel>
 
@@ -418,7 +565,9 @@ export default function QuizEditor() {
                         <Form.Control
                           type="datetime-local"
                           value={formData.untilDate || ""}
-                          onChange={(e) => handleInputChange("untilDate", e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange("untilDate", e.target.value)
+                          }
                         />
                       </FloatingLabel>
                     </Form>
@@ -433,11 +582,18 @@ export default function QuizEditor() {
                   <Card.Body>
                     <div className="d-flex align-items-center justify-content-between p-2 bg-light rounded">
                       <span>Everyone</span>
-                      <Button variant="link" size="sm" className="text-muted p-0">
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="text-muted p-0"
+                      >
                         ×
                       </Button>
                     </div>
-                    <Button variant="link" className="mt-2 p-0 text-decoration-none">
+                    <Button
+                      variant="link"
+                      className="mt-2 p-0 text-decoration-none"
+                    >
                       + Add
                     </Button>
                   </Card.Body>
@@ -448,9 +604,10 @@ export default function QuizEditor() {
 
           {/* Questions Tab */}
           <Tab.Pane eventKey="questions">
-            <QuestionsTab 
-              questions={formData.questions || []} 
+            <QuestionsTab
+              questions={formData.questions || []}
               onUpdateQuestions={handleQuestionsUpdate}
+              onLocalQuestionsChange={handleLocalQuestionsChange}
             />
           </Tab.Pane>
         </Tab.Content>
@@ -458,19 +615,23 @@ export default function QuizEditor() {
 
       {/* Action Buttons */}
       <div className="d-flex justify-content-end gap-2 mt-4 mb-4">
-        <Button variant="outline-secondary" onClick={handleCancel} disabled={saving}>
+        <Button
+          variant="outline-secondary"
+          onClick={handleCancel}
+          disabled={saving}
+        >
           Cancel
         </Button>
-        <Button 
-          variant="outline-primary" 
-          onClick={() => handleSave(false)} 
+        <Button
+          variant="outline-primary"
+          onClick={() => handleSave(false)}
           disabled={saving}
         >
           {saving ? "Saving..." : "Save"}
         </Button>
-        <Button 
-          variant="success" 
-          onClick={() => handleSave(true)} 
+        <Button
+          variant="success"
+          onClick={() => handleSave(true)}
           disabled={saving}
         >
           {saving ? "Publishing..." : "Save & Publish"}
